@@ -12,8 +12,7 @@
 //
 // See https://nigeltao.github.io/blog/2021/json-with-commas-comments.html
 //
-//
-// Functionality
+// # Functionality
 //
 // The Parse function parses HuJSON input as a Value,
 // which is a syntax tree exactly representing the input.
@@ -32,8 +31,7 @@
 // but instead for the HuJSON and standard JSON format.
 // The Patch method applies a JSON Patch (RFC 6902) to the receiving value.
 //
-//
-// Grammar
+// # Grammar
 //
 // The changes to the JSON grammar are:
 //
@@ -72,8 +70,7 @@
 //	 	'000A' ws
 //	 	'000D' ws
 //
-//
-// Use with the Standard Library
+// # Use with the Standard Library
 //
 // This package operates with HuJSON as an AST. In order to parse HuJSON
 // into arbitrary Go types, use this package to parse HuJSON input as an AST,
@@ -108,6 +105,7 @@ import (
 //	'f': false
 //	't': true
 //	'"': string
+//	'`': multiline string
 //	'0': number
 //	'{': object
 //	'[': array
@@ -252,7 +250,7 @@ func (b Literal) Kind() Kind {
 		return 0
 	}
 	switch k := b[0]; k {
-	case 'n', 'f', 't', '"':
+	case 'n', 'f', 't', '"', '`':
 		return Kind(k)
 	case '-', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9':
 		return '0'
@@ -264,9 +262,21 @@ func (b Literal) Kind() Kind {
 // IsValid reports whether b is a valid JSON null, boolean, string, or number.
 // The literal must not have surrounding whitespace.
 func (b Literal) IsValid() bool {
+	// Literals should already have all whitespace trimmed.
+	if len(b) != len(bytes.TrimSpace(b)) {
+		return false
+	}
+
+	if b[0] == '`' && b[len(b)-1] == '`' {
+		// Multiline string literal.
+		// It should be a valid JSON string after standardizing
+		std := standardizedMultiString(b)
+		return json.Valid(std)
+	}
+
 	// NOTE: The v1 json package is non-compliant with RFC 8259, section 8.1
 	// in that it does not enforce the use of valid UTF-8.
-	return json.Valid(b) && len(b) == len(bytes.TrimSpace(b))
+	return json.Valid(b)
 }
 
 // Bool returns the value for a JSON boolean.
@@ -280,6 +290,13 @@ func (b Literal) Bool() bool {
 func (b Literal) String() (s string) {
 	if b.Kind() == '"' && json.Unmarshal(b, &s) == nil {
 		return s
+	}
+	if b.Kind() == '`' {
+		std := standardizedMultiString(b)
+		err := json.Unmarshal(std, &s)
+		if err == nil {
+			return string(std)
+		}
 	}
 	return string(b)
 }
@@ -322,6 +339,8 @@ func (b Literal) Float() (n float64) {
 	}
 	return 0
 }
+
+// TODO: add helper functions for multiline string and identifier
 
 func (Literal) isValueTrimmed() {}
 

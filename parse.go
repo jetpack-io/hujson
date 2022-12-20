@@ -92,7 +92,7 @@ func parseNextTrimmed(n int, b []byte) (ValueTrimmed, int, error) {
 				}
 				return &obj, n, err
 			}
-			if vk.Value.Kind() != '"' {
+			if vk.Value.Kind() != '"' && vk.Value.Kind() != '`' {
 				return &obj, vk.StartOffset, newInvalidCharacterError(b[vk.StartOffset:], "at start of object name")
 			}
 
@@ -162,7 +162,8 @@ func parseNextTrimmed(n int, b []byte) (ValueTrimmed, int, error) {
 		return nil, n, errInvalidArrayEnd
 
 	// Parse strings.
-	case '"':
+	case '"', '`':
+		delim := b[n]
 		n0 := n
 		n++
 		var inEscape bool
@@ -174,7 +175,7 @@ func parseNextTrimmed(n int, b []byte) (ValueTrimmed, int, error) {
 				inEscape = false
 			case b[n] == '\\':
 				inEscape = true
-			case b[n] == '"':
+			case b[n] == delim:
 				n++
 				lit := Literal(b[n0:n:n])
 				if !lit.IsValid() {

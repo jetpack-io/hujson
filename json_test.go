@@ -275,6 +275,62 @@ var testdata = []struct {
 		StartOffset: 1,
 	},
 	wantErr: fmt.Errorf("hujson: line 1, column 2: %w", errors.New("invalid character '\\U00101234' at start of value")),
+}, {
+	in: `{"k":"
+	  multi
+		line
+	"}`,
+	want:    Value{Value: &Object{}},
+	wantErr: fmt.Errorf("hujson: line 1, column 6: %w", errors.New("invalid literal: \"\n	  multi\n		line\n	\"")),
+}, {
+	in: " { `k` : `v` } ",
+	want: Value{
+		BeforeExtra: Extra(" "),
+		StartOffset: 1,
+		Value: &Object{
+			Members: []ObjectMember{{
+				Value{BeforeExtra: Extra(" "), StartOffset: 3, Value: Literal("`k`"), EndOffset: 6, AfterExtra: Extra(" ")},
+				Value{BeforeExtra: Extra(" "), StartOffset: 9, Value: Literal("`v`"), EndOffset: 12},
+			}},
+			AfterExtra: Extra(" "),
+		},
+		EndOffset:  14,
+		AfterExtra: Extra(" "),
+	},
+	wantMin: `{"k":"v"}`,
+	wantStd: ` { "k" : "v" } `,
+}, {
+	in: "{ `k`: `\n" +
+		"  multi\n" +
+		"  line\n" +
+		"` }",
+	want: Value{
+		Value: &Object{
+			Members: []ObjectMember{{
+				Value{BeforeExtra: Extra(" "), StartOffset: 2, Value: Literal("`k`"), EndOffset: 5},
+				Value{BeforeExtra: Extra(" "), StartOffset: 7, Value: Literal("`\n  multi\n  line\n`"), EndOffset: 25},
+			}},
+			AfterExtra: Extra(" "),
+		},
+		EndOffset: 27,
+	},
+	wantMin: `{"k":"\n  multi\n  line\n"}`,
+	wantStd: `{ "k": "\n  multi\n  line\n" }`,
+}, {
+	in:      "`\\u0022😊`",
+	want:    Value{Value: Literal("`\\u0022😊`"), EndOffset: 12},
+	wantMin: `"\u0022😊"`,
+	wantStd: `"\u0022😊"`,
+}, {
+	in:      "`\\``",
+	want:    Value{Value: Literal("`\\``"), EndOffset: 4},
+	wantMin: "\"`\"",
+	wantStd: "\"`\"",
+}, {
+	in:      "`1\\\n2`",
+	want:    Value{Value: Literal("`1\\\n2`"), EndOffset: 6},
+	wantMin: `"12"`,
+	wantStd: `"12"`,
 }}
 
 func Test(t *testing.T) {
