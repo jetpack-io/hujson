@@ -92,7 +92,7 @@ func parseNextTrimmed(n int, b []byte) (ValueTrimmed, int, error) {
 				}
 				return &obj, n, err
 			}
-			if vk.Value.Kind() != '"' && vk.Value.Kind() != '`' {
+			if vk.Value.Kind() != '"' && vk.Value.Kind() != '`' && vk.Value.Kind() != 'a' {
 				return &obj, vk.StartOffset, newInvalidCharacterError(b[vk.StartOffset:], "at start of object name")
 			}
 
@@ -108,6 +108,10 @@ func parseNextTrimmed(n int, b []byte) (ValueTrimmed, int, error) {
 			// Parse the value.
 			if vv, n, err = parseNext(n, b); err != nil {
 				return &obj, n, err
+			}
+			// Identifiers are only allowed as keys.
+			if vv.Value.Kind() == 'a' {
+				return &obj, vv.StartOffset, newInvalidCharacterError(b[vv.StartOffset:], "at start of object value")
 			}
 
 			obj.Members = append(obj.Members, ObjectMember{vk, vv})
@@ -142,6 +146,10 @@ func parseNextTrimmed(n int, b []byte) (ValueTrimmed, int, error) {
 					return &arr, n + len(`]`), nil
 				}
 				return &arr, n, err
+			}
+			// Identifiers are only allowed as keys.
+			if v.Value.Kind() == 'a' {
+				return &arr, v.StartOffset, newInvalidCharacterError(b[v.StartOffset:], "at start of array value")
 			}
 			arr.Elements = append(arr.Elements, v)
 			switch {

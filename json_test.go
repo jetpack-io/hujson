@@ -331,6 +331,40 @@ var testdata = []struct {
 	want:    Value{Value: Literal("`1\\\n2`"), EndOffset: 6},
 	wantMin: `"12"`,
 	wantStd: `"12"`,
+}, {
+	in: " { k : `v` } ",
+	want: Value{
+		BeforeExtra: Extra(" "),
+		StartOffset: 1,
+		Value: &Object{
+			Members: []ObjectMember{{
+				Value{BeforeExtra: Extra(" "), StartOffset: 3, Value: Literal("k"), EndOffset: 4, AfterExtra: Extra(" ")},
+				Value{BeforeExtra: Extra(" "), StartOffset: 7, Value: Literal("`v`"), EndOffset: 10},
+			}},
+			AfterExtra: Extra(" "),
+		},
+		EndOffset:  12,
+		AfterExtra: Extra(" "),
+	},
+	wantMin: `{"k":"v"}`,
+	wantStd: ` { "k" : "v" } `,
+}, {
+	in: ` { t : "v" } `,
+	want: Value{
+		BeforeExtra: Extra(" "),
+		StartOffset: 1,
+		Value: &Object{
+			Members: []ObjectMember{{
+				Value{BeforeExtra: Extra(" "), StartOffset: 3, Value: Literal("t"), EndOffset: 4, AfterExtra: Extra(" ")},
+				Value{BeforeExtra: Extra(" "), StartOffset: 7, Value: Literal(`"v"`), EndOffset: 10},
+			}},
+			AfterExtra: Extra(" "),
+		},
+		EndOffset:  12,
+		AfterExtra: Extra(" "),
+	},
+	wantMin: `{"t":"v"}`,
+	wantStd: ` { "t" : "v" } `,
 }}
 
 func Test(t *testing.T) {

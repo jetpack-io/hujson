@@ -106,6 +106,7 @@ import (
 //	't': true
 //	'"': string
 //	'`': multiline string
+//	'a': identifier
 //	'0': number
 //	'{': object
 //	'[': array
@@ -249,14 +250,37 @@ func (b Literal) Kind() Kind {
 	if len(b) == 0 {
 		return 0
 	}
+
 	switch k := b[0]; k {
-	case 'n', 'f', 't', '"', '`':
+	case '"', '`':
+		// TODO: check for full 'false', etc
 		return Kind(k)
 	case '-', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9':
 		return '0'
-	default:
-		return 0
 	}
+
+	if bytes.Equal(b, []byte("null")) {
+		return 'n'
+	}
+	if bytes.Equal(b, []byte("false")) {
+		return 'f'
+	}
+	if bytes.Equal(b, []byte("true")) {
+		return 't'
+	}
+	if (b[0] >= 'a' && b[0] <= 'z') || (b[0] >= 'A' && b[0] <= 'Z') {
+		// TODO: also allow '_' and '$' as per
+		// https://262.ecma-international.org/5.1/#sec-7.6
+
+		// Technically 'true', 'false', and 'null' could also be valid identifiers
+		// if they are in the "field name" position, but to simplify the logic we're
+		// going to treat them as keywords (hence why they get processed first).
+		// In practice, we won't be using them as field names, so this shouldn't be
+		// a problem.
+		return 'a'
+	}
+
+	return 0
 }
 
 // IsValid reports whether b is a valid JSON null, boolean, string, or number.
@@ -274,9 +298,24 @@ func (b Literal) IsValid() bool {
 		return json.Valid(std)
 	}
 
+	if b.Kind() == 'a' {
+		for _, r := range b {
+			if !isIdentifierChar(r) {
+				return false
+			}
+		}
+		return true
+	}
+
 	// NOTE: The v1 json package is non-compliant with RFC 8259, section 8.1
 	// in that it does not enforce the use of valid UTF-8.
 	return json.Valid(b)
+}
+
+func isIdentifierChar(r byte) bool {
+	// TODO: allow '$'. But we're starting stricter than that in case we want to give
+	// '$' any special meaning later on.
+	return (r >= 'a' && r <= 'z') || (r >= 'A' && r <= 'Z') || (r >= '0' && r <= '9') || r == '_'
 }
 
 // Bool returns the value for a JSON boolean.

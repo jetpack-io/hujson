@@ -20,7 +20,7 @@ func (v *Value) isStandard() bool {
 			return false
 		}
 	} else {
-		if v.Value.Kind() == '`' {
+		if v.Value.Kind() == '`' || v.Value.Kind() == 'a' {
 			return false
 		}
 	}
@@ -96,6 +96,9 @@ func standardizedLiteral(src Literal) Literal {
 	if src.Kind() == '`' {
 		return standardizedMultiString(src)
 	}
+	if src.Kind() == 'a' {
+		return standarizedIdentifier(src)
+	}
 	return src
 }
 
@@ -136,5 +139,13 @@ func standardizedMultiString(src Literal) Literal {
 		// Default case, just append the character
 		result = append(result, c)
 	}
+	return result
+}
+
+func standarizedIdentifier(src Literal) Literal {
+	result := make([]byte, 0, len(src)+2)
+	result = append(result, '"')
+	result = append(result, src...)
+	result = append(result, '"')
 	return result
 }
