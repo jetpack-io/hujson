@@ -388,6 +388,18 @@ var testdata = []struct {
 		Members: nil,
 	}},
 	wantErr: fmt.Errorf("hujson: line 1, column 7: %w", errors.New("invalid character 'v' at start of object value")),
+}, {
+	in: `{0: "v"}`,
+	want: Value{Value: &Object{
+		Members: nil,
+	}},
+	wantErr: fmt.Errorf("hujson: line 1, column 2: %w", errors.New("invalid character '0' at start of object name")),
+}, {
+	in: `{.: "v"}`,
+	want: Value{Value: &Object{
+		Members: nil,
+	}},
+	wantErr: fmt.Errorf("hujson: line 1, column 2: %w", errors.New("invalid literal: .")),
 }}
 
 func Test(t *testing.T) {
