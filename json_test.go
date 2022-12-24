@@ -365,6 +365,13 @@ var testdata = []struct {
 	},
 	wantMin: `{"tf_0":"v"}`,
 	wantStd: ` { "tf_0" : "v" } `,
+}, {
+	in: "foo",
+	want: Value{
+		Value:     Literal("foo"),
+		EndOffset: 3,
+	},
+	wantErr: fmt.Errorf("hujson: line 1, column 4: %w", fmt.Errorf("invalid character 'f' after top-level value")),
 }}
 
 func Test(t *testing.T) {

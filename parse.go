@@ -26,6 +26,10 @@ func Parse(b []byte) (Value, error) {
 	if err == nil && n < len(b) {
 		err = newInvalidCharacterError(b[n:], "after top-level value")
 	}
+	// Identifiers can't be top-level values.
+	if v.Value != nil && v.Value.Kind() == 'a' {
+		err = newInvalidCharacterError(b[v.StartOffset:], "after top-level value")
+	}
 	if err != nil {
 		line, column := lineColumn(b, n)
 		err = fmt.Errorf("hujson: line %d, column %d: %w", line, column, err)
