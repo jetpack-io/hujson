@@ -372,6 +372,22 @@ var testdata = []struct {
 		EndOffset: 3,
 	},
 	wantErr: fmt.Errorf("hujson: line 1, column 4: %w", fmt.Errorf("invalid character 'f' after top-level value")),
+}, {
+	in: "[foo]",
+	want: Value{
+		StartOffset: 0,
+		Value: &Array{
+			Elements: nil,
+		},
+		EndOffset: 0,
+	},
+	wantErr: fmt.Errorf("hujson: line 1, column 2: %w", fmt.Errorf("invalid character 'f' at start of array value")),
+}, {
+	in: `{"k": v }`,
+	want: Value{Value: &Object{
+		Members: nil,
+	}},
+	wantErr: fmt.Errorf("hujson: line 1, column 7: %w", errors.New("invalid character 'v' at start of object value")),
 }}
 
 func Test(t *testing.T) {
