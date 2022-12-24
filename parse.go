@@ -197,7 +197,7 @@ func parseNextTrimmed(n int, b []byte) (ValueTrimmed, int, error) {
 	// Parse null, booleans, and numbers.
 	default:
 		n0 := n
-		for len(b) > n && (b[n] == '-' || b[n] == '+' || b[n] == '.' ||
+		for len(b) > n && (b[n] == '-' || b[n] == '+' || b[n] == '.' || b[n] == '_' ||
 			('a' <= b[n] && b[n] <= 'z') ||
 			('A' <= b[n] && b[n] <= 'Z') ||
 			('0' <= b[n] && b[n] <= '9')) {
