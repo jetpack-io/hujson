@@ -400,6 +400,12 @@ var testdata = []struct {
 		Members: nil,
 	}},
 	wantErr: fmt.Errorf("hujson: line 1, column 2: %w", errors.New("invalid literal: .")),
+}, {
+	in: `{foo+a: "v"}`,
+	want: Value{Value: &Object{
+		Members: nil,
+	}},
+	wantErr: fmt.Errorf("hujson: line 1, column 2: %w", errors.New("invalid literal: foo+a")),
 }}
 
 func Test(t *testing.T) {
