@@ -1,4 +1,4 @@
-module github.com/tailscale/hujson
+module go.jetpack.io/hujson
 
 go 1.18
 

@@ -4,8 +4,7 @@
 
 package hujson
 
-// IsStandard reports whether this is standard JSON
-// by checking that there are no comments and no trailing commas.
+// IsStandard reports whether this is standard JSON.
 func (v Value) IsStandard() bool {
 	return v.isStandard()
 }
@@ -18,6 +17,10 @@ func (v *Value) isStandard() bool {
 			return false
 		}
 		if hasTrailingComma(comp) || !comp.afterExtra().IsStandard() {
+			return false
+		}
+	} else {
+		if v.Value.Kind() == '`' || v.Value.Kind() == 'a' {
 			return false
 		}
 	}
@@ -48,6 +51,9 @@ func (v *Value) minimize() bool {
 		setTrailingComma(v2, false)
 		*v2.afterExtra() = nil
 	}
+	if lit, ok := v.Value.(Literal); ok {
+		v.Value = standardizedLiteral(lit)
+	}
 	v.AfterExtra = nil
 	return true
 }
@@ -70,6 +76,9 @@ func (v *Value) standardize() bool {
 		}
 		comp.afterExtra().standardize()
 	}
+	if lit, ok := v.Value.(Literal); ok {
+		v.Value = standardizedLiteral(lit)
+	}
 	v.AfterExtra.standardize()
 	return true
 }
@@ -82,4 +91,61 @@ func (b *Extra) standardize() {
 			(*b)[i] = ' '
 		}
 	}
+}
+func standardizedLiteral(src Literal) Literal {
+	if src.Kind() == '`' {
+		return standardizedMultiString(src)
+	}
+	if src.Kind() == 'a' {
+		return standarizedIdentifier(src)
+	}
+	return src
+}
+
+func standardizedMultiString(src Literal) Literal {
+	// Convert multiline strings into regular JSON strings:
+	result := make([]byte, 0, len(src)+10)
+	escapeNext := false
+	for i, c := range src {
+		// Replace initial/final backticks with double quotes.
+		if i == 0 || i == len(src)-1 {
+			result = append(result, `"`...)
+			continue
+		}
+
+		// Handle escape sequences
+		if c == '\\' {
+			escapeNext = true
+			continue
+		} else if escapeNext {
+			escapeNext = false
+			switch c {
+			case '`':
+				result = append(result, '`')
+			case '\n':
+				// Ignore the newline if it's been escaped
+			default:
+				result = append(result, '\\', c)
+			}
+			continue
+		}
+
+		// Escape newline characters
+		if c == '\n' {
+			result = append(result, `\n`...)
+			continue
+		}
+
+		// Default case, just append the character
+		result = append(result, c)
+	}
+	return result
+}
+
+func standarizedIdentifier(src Literal) Literal {
+	result := make([]byte, 0, len(src)+2)
+	result = append(result, '"')
+	result = append(result, src...)
+	result = append(result, '"')
+	return result
 }
