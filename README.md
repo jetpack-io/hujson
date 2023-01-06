@@ -5,7 +5,7 @@ of [standard JSON](https://datatracker.ietf.org/doc/html/rfc8259) that is easier
 for humans to write and modify. It's based on Tailscale's corresponding [HuJSON library](https://github.com/tailscale/hujson) but allows for some additional syntax.
 
 Example:
-```
+```js
 {
     /* Block comments and multiline strings */
     multi: `
@@ -24,7 +24,7 @@ Jetpack.io's HuJSON format permits the following additions over standard JSON:
 C-style line comments and block comments can be intermixed with whitespace.
 
 Example:
-```json
+```js
 {
     // This is a line comment
     "foo": "bar", /* This is a block comment */
@@ -36,7 +36,7 @@ Example:
 Trailing commas after the last member/element in an object/array are allowed.
 
 Examples:
-```json
+```js
 {
     "foo": "bar", // It's ok to have a comma in the last element
 }
@@ -44,7 +44,7 @@ Examples:
 
 As a result, you can comment out the last entry in an object or array, and the commas still parse correctly:
 
-```json
+```js
 {
     "foo": "bar",
     // "baz": "quux"
@@ -57,7 +57,7 @@ Multiline strings are allowed. Multiline strings use JavaScript's [template stri
 They are particularly useful for writing long strings that contain newlines.
 
 Example:
-```json
+```js
 {
     "foo": `This is a multiline string
     that contains a newline`,
@@ -76,10 +76,9 @@ The key for an object can be written without quotes if it starts with a letter
 Javscript, and Typescript already allow for unquoted keys (but standard JSON does not)
 
 Example:
-```json
+```js
 {
     foo: "bar",
     baz_quux: "quuz"
 }
 ```
-
